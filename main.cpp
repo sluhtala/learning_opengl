@@ -2,6 +2,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
+#include "handle_input.h"
+#include <math.h>
+#include "shader_class.h"
+#include <string.h>
 
 #define string std::string
 
@@ -27,7 +31,6 @@ int initialize_glfw_glew(GLFWwindow** window)
 	else
 		std::cout << "GLEW OK" << std::endl;
 }
-#include <string.h>
 char *read_shader_from_file(string filename)
 {
 	string shader;
@@ -44,11 +47,19 @@ char *read_shader_from_file(string filename)
 	return (ret);
 }
 
+
+
 int main(void)
 {
     GLFWwindow* window;
 	if (initialize_glfw_glew(&window) == -1)
 		return(-1);
+	
+	//set input callbacks
+	glfwSetCursorPosCallback(window, on_mouse_moved);
+	glfwSetMouseButtonCallback(window, on_mouse_clicked);
+	glfwSetKeyCallback(window, on_key_pressed);
+	//create data
 	float vertices[] = {
 		0.5f, 0.5f, 0.0f, //top right
 		0.5f,-0.5f, 0.0f, //bottom right
@@ -60,46 +71,9 @@ int main(void)
 		0,1,3,
 		1,2,3
 	};
+//Create shader program
+	Shader my_shader = Shader("shaders/vertexshader.glsl", "shaders/fragshader.glsl");
 
-	char *vertex_shader_source = read_shader_from_file("shaders/vertexshader.glsl");
-	char *fragment_shader_source = read_shader_from_file("shaders/fragshader.glsl");
-	unsigned int vertex_shader;
-	unsigned int fragment_shader;
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-	free(vertex_shader_source);
-	free(fragment_shader_source);
-	glCompileShader(vertex_shader);
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
-		glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
-		std::cout << "Error compiling vertex shader\n" << infoLog << std::endl;
-	}
-	glCompileShader(fragment_shader);
-	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
-		glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
-		std::cout << "Error compiling fragment shader\n" << infoLog << std::endl;
-	}
-	unsigned int shader_program;
-	shader_program = glCreateProgram();
-	glAttachShader(shader_program, vertex_shader);
-	glAttachShader(shader_program, fragment_shader);
-	glLinkProgram(shader_program);
-	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(shader_program, 512, NULL, infoLog);
-		std::cout << "Error linking shaders\n" << infoLog << std::endl;
-	}
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
 
 //START buffer stuff
 	unsigned int vbo;
@@ -126,9 +100,12 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
+		glClearColor(0.04f, 0.3f, 0.0f, 1.0f); 
         glClear(GL_COLOR_BUFFER_BIT);
-
-		glUseProgram(shader_program);
+		float t = glfwGetTime();
+		float xpos = sin(t);	
+		my_shader.use();
+		my_shader.setFloat("utest", xpos);
 		glBindVertexArray(vao);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
@@ -137,8 +114,6 @@ int main(void)
 
         /* Poll for and process events */
         glfwPollEvents();
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 	glfwTerminate();
     return 0;

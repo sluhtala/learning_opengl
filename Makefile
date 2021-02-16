@@ -1,6 +1,8 @@
 NAME=test
-SRC=main.cpp
-OBJECTS = $(SRC:.c=.o)
+SRC=main.cpp\
+	handle_input.cpp\
+	shader_class.cpp
+OBJECTS = $(SRC:.cpp=.o)
 #INCLUDES=glfw-3.3.2.bin.WIN32\glfw-3.3.2.bin.WIN32\include
 #LIB=glfw-3.3.2.bin.WIN32\glfw-3.3.2.bin.WIN32\lib-mingw
 INCLUDE=include
